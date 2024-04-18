@@ -5,7 +5,8 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   // TODO: convolve matrix a and matrix b, and store the resulting matrix in
   // output_matrix
   // flipping matrix b 
-  uint32_t total_items = (b_matrix->rows) * (b_matrix->columns);
+  uint32_t total_items = (b_matrix->rows) * (b_matrix->cols);
+
   int32_t temp;
   for(uint32_t i = 0; i < total_items / 2; i++) {
       temp = b_matrix[i];
@@ -13,6 +14,14 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
       b_matrix[total_items - i - 1] = temp;
   }
   //now we malloc space for the output_matrix
+  int32_t *output = (int32_t*) malloc (((a_matrix->rows) / (b_matrix -> rows) + (a_matrix -> cols) / (b_matrix -> cols)) * sizeof(int32_t));
+  //now we matrix multiply
+  uint32_t output_counter = 0;
+  uint32_t a_counter = 0;
+  uint32_t b_counter = 0;
+  //note that b_counter is going to be limited to the size of b 
+    
+    
 
 
 
