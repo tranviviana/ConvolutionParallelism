@@ -14,9 +14,24 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
       b_matrix[total_items - i - 1] = temp;
   }
   //now we malloc space for the output_matrix
-  int32_t *output = (int32_t*) malloc (((a_matrix->rows) / (b_matrix -> rows) + (a_matrix -> cols) / (b_matrix -> cols)) * sizeof(int32_t));
+  uint32_t output_rows = (a_matrix->rows) / (b_matrix -> rows);
+  uint32_t output_cols = (a_matrix->cols) / (b_matrix -> cols);
+  int32_t *output = (int32_t*) malloc (output_rows + output_cols) * sizeof(int32_t);
+  uint32_t output_numitems = output_rows * out_cols;
   
   //now we element wise multiple
+  uint32_t counter = 0;
+  while (((counter + b_matrix -> rows) < output_numitems) && (counter + b_matrix -> cols) < output_numitems) {
+  uint32_t row_counter = 0;
+  uint32_t col_counter = 0;
+  while 
+
+
+
+
+  col_counter = 0;
+  row_counter ++;
+  }
   
       
   
