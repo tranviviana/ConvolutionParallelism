@@ -31,7 +31,9 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
     //location in a is the counter
 
     uint32_t counter = 0;
+    //counter is location within a
     uint32_t output_counter = 0;
+    //number of calls within one row is the shifter
     int shifter = 1;
     int row_counter = 1;
     while (output_counter < (output_cols * output_rows)) {
@@ -70,17 +72,17 @@ int32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matri
 
 
     int counter = 0;
+    //counter in this case represents pairs being multiplied
     int col_counter = 1;
     int32_t sum = 0;
     int moving_location = start_location;
+    //moving location represents the location within a
     int row_counter = 1;
 
     //parsing through a array until we have multiplied all elements
     if (a_cols > b_cols) {
         while (counter < total_items) {
             sum += b_array[counter] * a_array[moving_location];
-           /* printf("%d", b_array[counter]);
-            printf("%d", a_array[moving_location]);*/
 
            if (col_counter - b_cols == 0) {
                 //move down one row
@@ -91,12 +93,10 @@ int32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matri
             counter++;
             moving_location++;
             col_counter++;
-        //    printf('%d',b_array[counter]);
         
         }
     } else {
         while (counter < total_items) {
-            printf("this is mistake");
             sum += b_array[counter] * a_array[start_location];
             counter++;
             start_location++;
