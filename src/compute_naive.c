@@ -1,5 +1,5 @@
 #include "compute.h"
-int blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matrix, int total_items);
+uint32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matrix, int total_items);
 void flip(matrix_t *b_matrix, uint32_t total_items);
 // Computes the convolution of two matrices
 int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
@@ -7,8 +7,9 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   // output_matrix
   // flipping matrix b 
   uint32_t total_items = (b_matrix->rows) * (b_matrix->cols);
+  uint32_t a_total = (a_matrix->rows) * (a_matrix->cols);
 
-  //flip b matrix
+  //flip b matrix matrix flip should be right
   flip(b_matrix, total_items);
 
   //now we malloc space for the output_matrix
@@ -21,14 +22,27 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
       return -1;
   }
   
+
   
   //set *output_matrix to be a point to resulting matrix where matrix is allocated
   *output_matrix = omatrix;
   omatrix->rows = output_rows;
   omatrix->cols = output_cols;
   omatrix->data = output;
-    
-  output[0] = 1;
+
+    uint32_t counter = 0;
+    uint32_t row_counter = 1;
+    uint32_t output_counter = 0;
+    while (counter < (a_total - (total_items)) || ((a_total == total_items) && (counter < 1))) {
+        //same size matrices == only one will fit
+        if ((counter + (b_matrix->cols)) <= (row_counter * (a_matrix-> cols))) {
+            output[output_counter] = blockwise(counter, b_matrix, a_matrix, total_items);  
+            output_counter++;
+        }
+        counter++;
+
+    }
+  /*
   //now we element-wise multiple
   uint32_t counter = 0; //starting location for the a matrix
   uint32_t output_counter = 0; //location for output matrix
@@ -36,14 +50,14 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
     //check that the block is within the constraints of the right corner
   while (((counter - 1 + (b_matrix -> cols)) % a_matrix->cols) != 0 ) {
       //check that the block is within the constraints of the right side
-    uint32_t sum = blockwise(counter, b_matrix, a_matrix, total_items); 
-    output[output_counter] = sum;
+    uint32_t sum = blockwise(counter, &b_matrix, &a_matrix, total_items); 
+    output[output_counter] = 1;
     output_counter += 1;
     counter += 1;
   }
   counter += (b_matrix-> cols);
   }
-  
+ */
   return 0;
 }
 void flip(matrix_t *b_matrix, uint32_t total_items) {
@@ -53,7 +67,7 @@ void flip(matrix_t *b_matrix, uint32_t total_items) {
       (b_matrix-> data)[total_items - i - 1] = temp;
   }
 }
-int blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matrix, int total_items) {
+uint32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matrix, int total_items) {
     //pointers to array's data
     int32_t *b_array = b_matrix->data;
     int32_t *a_array = a_matrix->data;
@@ -67,15 +81,14 @@ int blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matrix, i
             //move down one row
             start_location = start_location + b_cols;
             col_counter = 0;
+             
         }
         sum += b_array[counter] * a_array[start_location];
-        printf("here");
         counter++;
         start_location++;
         col_counter++;
     }
     return sum;
-
 }
 
 // Executes a task
