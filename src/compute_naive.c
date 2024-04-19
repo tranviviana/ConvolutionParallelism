@@ -13,8 +13,8 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   flip(b_matrix, total_items);
 
   //now we malloc space for the output_matrix
-  uint32_t output_rows = (a_matrix->rows) / (b_matrix -> rows);
-  uint32_t output_cols = (a_matrix->cols) / (b_matrix -> cols);
+  uint32_t output_rows = (a_matrix->rows) - (b_matrix -> rows) + 1;
+  uint32_t output_cols = (a_matrix->cols) - (b_matrix -> cols) + 1;
   int32_t *output = (int32_t*) malloc((output_rows + output_cols) * sizeof(int32_t));
   matrix_t *omatrix = (matrix_t *) malloc(sizeof(matrix_t));
   
@@ -22,7 +22,6 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
       return -1;
   }
   
-
   
   //set *output_matrix to be a point to resulting matrix where matrix is allocated
   *output_matrix = omatrix;
@@ -31,33 +30,32 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   omatrix->data = output;
 
     uint32_t counter = 0;
-    uint32_t row_counter = 1;
+    //uint32_t row_counter = 1;
     uint32_t output_counter = 0;
-    while (counter < (a_total - (total_items)) || ((a_total == total_items) && (counter < 1))) {
-        //same size matrices == only one will fit
+    while (counter <= (a_total - (total_items))) {
+        output[output_counter] = blockwise(counter, b_matrix, a_matrix, total_items);  
+        output_counter++;
+        
+        if(((counter + b_matrix->cols) % a_matrix->cols) == 0) {
+            counter = counter + b_matrix->cols;
+       } else {
+        counter++;
+       }
+    }
+        
+
+        /*//same size matrices == only one will fit
         if ((counter + (b_matrix->cols)) <= (row_counter * (a_matrix-> cols))) {
             output[output_counter] = blockwise(counter, b_matrix, a_matrix, total_items);  
             output_counter++;
+            if (counter == (row_counter * (a_matrix-> cols))) {
+                //if we hit the last block before overlapping to far
+                row_counter++;
+            }
         }
         counter++;
 
-    }
-  /*
-  //now we element-wise multiple
-  uint32_t counter = 0; //starting location for the a matrix
-  uint32_t output_counter = 0; //location for output matrix
-  while ((counter + (b_matrix -> cols) < (a_matrix->cols)) && (counter + (b_matrix -> rows) < (a_matrix->rows))) {
-    //check that the block is within the constraints of the right corner
-  while (((counter - 1 + (b_matrix -> cols)) % a_matrix->cols) != 0 ) {
-      //check that the block is within the constraints of the right side
-    uint32_t sum = blockwise(counter, &b_matrix, &a_matrix, total_items); 
-    output[output_counter] = 1;
-    output_counter += 1;
-    counter += 1;
-  }
-  counter += (b_matrix-> cols);
-  }
- */
+    }*/
   return 0;
 }
 void flip(matrix_t *b_matrix, uint32_t total_items) {
@@ -68,25 +66,35 @@ void flip(matrix_t *b_matrix, uint32_t total_items) {
   }
 }
 uint32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matrix, int total_items) {
+    //start location must be such that the entire block is in the block
     //pointers to array's data
     int32_t *b_array = b_matrix->data;
     int32_t *a_array = a_matrix->data;
     int b_cols = b_matrix->cols;
+    int a_cols = a_matrix->cols;
     int counter = 0;
     int col_counter = 0;
     uint32_t sum = 0;
     //parsing through a array until we have multiplied all elements
-    while (counter < total_items) {
-        if (col_counter % b_cols) {
-            //move down one row
-            start_location = start_location + b_cols;
-            col_counter = 0;
+    if (a_cols > b_cols) {
+        while (counter < total_items) {
+            if (col_counter - b_cols == 0) {
+                //move down one row
+                start_location = start_location + b_cols;
+                col_counter = 0;
              
+            }
+            sum += b_array[counter] * a_array[start_location];
+            counter++;
+            start_location++;
+            col_counter++;
         }
-        sum += b_array[counter] * a_array[start_location];
-        counter++;
-        start_location++;
-        col_counter++;
+    } else {
+        while (counter < total_items) {
+            sum += b_array[counter] * a_array[start_location];
+            counter++;
+            start_location++;
+        }
     }
     return sum;
 }
