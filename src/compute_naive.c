@@ -1,5 +1,6 @@
 #include "compute.h"
 int blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matrix, int total_items);
+void flip(matrix_t *b_matrix, uint32_t total_items);
 // Computes the convolution of two matrices
 int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   // TODO: convolve matrix a and matrix b, and store the resulting matrix in
@@ -7,12 +8,9 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   // flipping matrix b 
   uint32_t total_items = (b_matrix->rows) * (b_matrix->cols);
 
-  int32_t temp;
-  for(uint32_t i = 0; i < total_items / 2; i++) {
-      temp = (b_matrix->data)[i];
-      (b_matrix->data)[i] = (b_matrix->data)[total_items - i - 1];
-      (b_matrix-> data)[total_items - i - 1] = temp;
-  }
+  //flip b matrix
+  flip(b_matrix, total_items);
+
   //now we malloc space for the output_matrix
   uint32_t output_rows = (a_matrix->rows) / (b_matrix -> rows);
   uint32_t output_cols = (a_matrix->cols) / (b_matrix -> cols);
@@ -22,13 +20,16 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   if (output == NULL || output_matrix == NULL) {
       return -1;
   }
+  
+  
   //set *output_matrix to be a point to resulting matrix where matrix is allocated
   *output_matrix = omatrix;
   omatrix->rows = output_rows;
   omatrix->cols = output_cols;
   omatrix->data = output;
-  
-  //now we element wise multiple
+    
+  output[0] = 1;
+  //now we element-wise multiple
   uint32_t counter = 0; //starting location for the a matrix
   uint32_t output_counter = 0; //location for output matrix
   while ((counter + (b_matrix -> cols) < (a_matrix->cols)) && (counter + (b_matrix -> rows) < (a_matrix->rows))) {
@@ -44,6 +45,13 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   }
   
   return 0;
+}
+void flip(matrix_t *b_matrix, uint32_t total_items) {
+  for(uint32_t i = 0; i < total_items / 2; i++) {
+      int32_t temp = (b_matrix->data)[i];
+      (b_matrix->data)[i] = (b_matrix->data)[total_items - i - 1];
+      (b_matrix-> data)[total_items - i - 1] = temp;
+  }
 }
 int blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matrix, int total_items) {
     //pointers to array's data
@@ -61,6 +69,7 @@ int blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matrix, i
             col_counter = 0;
         }
         sum += b_array[counter] * a_array[start_location];
+        printf("here");
         counter++;
         start_location++;
         col_counter++;
