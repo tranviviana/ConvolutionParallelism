@@ -15,7 +15,7 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
 
   //flip b matrix
   int32_t *b_array = b_matrix->data;
-  __m256i reverse_order = _mm256_set_epi32(7,6,5,4,3,2,1,0);
+  __m256i reverse_order = _mm256_set_epi32(0,1,2,3,4,5,6,7);
 #pragma omp parallel for
   for(int i = 0; i < (total_items/2)/8 * 8; i += 8){
       __m256i front = _mm256_loadu_si256((__m256i*)&b_array[i]);
@@ -23,7 +23,8 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
       front =  _mm256_permutevar8x32_epi32(front, reverse_order);
       back =  _mm256_permutevar8x32_epi32(back, reverse_order);
 
-      _mm256_storeu_si256((__m256i*)&b_array[total_items - i], front);
+
+      _mm256_storeu_si256((__m256i*)&b_array[total_items - i - 8], front);
       _mm256_storeu_si256((__m256i*)&b_array[i], back);
 
   }
