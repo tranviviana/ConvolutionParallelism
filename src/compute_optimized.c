@@ -75,7 +75,6 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
         counter++;
         shifter++;
        }
-        
     }
     
 
@@ -118,6 +117,7 @@ int32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matri
         }
     } else {
         __m256i sumVec = _mm256_setzero_si256();
+        #pragma omp parallel for
         for(int vector_offset = 0; vector_offset < total_items / 8 * 8; vector_offset += 8)
           {
               __m256i b_temp = _mm256_loadu_si256((__m256i*)(b_array + vector_offset));
@@ -126,7 +126,7 @@ int32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matri
               __m256i product = _mm256_mullo_epi32(b_temp, a_temp);
               sumVec = _mm256_add_epi32(sumVec, product);
           }
-          for (int i = total_items / 8 * 8; i < total_items; i ++) {
+        for (int i = total_items / 8 * 8; i < total_items; i ++) {
               sum += b_array[i] * a_array[i];
           }
           int temp_arr[8];
