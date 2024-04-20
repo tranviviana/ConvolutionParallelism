@@ -117,11 +117,21 @@ int32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matri
         
         }
     } else {
-        while (counter < total_items) {
-            sum += b_array[counter] * a_array[start_location];
-            counter++;
-            start_location++;
-        }
+        __m256i sumVec = _mm256_setzero_si256();
+        for(int vector_offset = 0; vector_offset < total_items / 8 * 8; vector_offset += 8)
+          {
+              __m256i b_temp = _mm256_loadu_si256((__m256i*)(b_array + vector_offset));
+              __m256i a_temp = _mm256_loadu_si256((__m256i*)(a_array + vector_offset));
+
+              __m256i product = _mm256_mullo_epi32(b_temp, a_temp);
+              sumVec = _mm256_add_epi32(sumVec, product);
+          }
+          for (int i = total_items / 8 * 8; i < total_items; i ++) {
+              sum += b_array[i] * a_array[i];
+          }
+          int temp_arr[8];
+          _mm256_storeu_si256((__m256i*)temp_arr, sumVec);
+          sum += temp_arr[0] + temp_arr[1] + temp_arr[2] + temp_arr[3] + temp_arr[4] + temp_arr[5]+ temp_arr[6]+ temp_arr[7];
     }
     return sum;
 }
