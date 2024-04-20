@@ -2,7 +2,7 @@
 #include <x86intrin.h>
 
 #include "compute.h"
-
+int32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matrix, int total_items);
 // Computes the convolution of two matrices
 int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   // TODO: convolve matrix a and matrix b, and store the resulting matrix in
@@ -11,9 +11,33 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
     uint32_t total_items = (b_matrix->rows) * (b_matrix->cols);
     /*uint32_t a_total = (a_matrix->rows) * (a_matrix->cols);*/
   
-    //flip b matrix matrix flip should be right
-    flip(b_matrix, total_items);
-  
+  //unrolling the flip by 4
+      #pragma omp parallel for
+      for(uint32_t i = 0; i < total_items / 2 /4 * 4; i+=4) {
+        int32_t temp1 = (b_matrix->data)[i];
+        int32_t temp2 = (b_matrix->data)[i + 1];
+        int32_t temp3 = (b_matrix->data)[i + 2];
+        int32_t temp4 = (b_matrix->data)[i + 3];
+
+        (b_matrix->data)[i] = (b_matrix->data)[total_items - i - 1];
+        (b_matrix->data)[i + 1] = (b_matrix->data)[total_items - i + 1 - 1];
+        (b_matrix->data)[i + 2] = (b_matrix->data)[total_items - i + 2 - 1];
+        (b_matrix->data)[i + 3] = (b_matrix->data)[total_items - i + 3 - 1];
+
+        (b_matrix-> data)[total_items - i - 1] = temp1;
+        (b_matrix-> data)[total_items - i + 1 - 1] = temp2;
+        (b_matrix-> data)[total_items - i + 2 - 1] = temp3;
+        (b_matrix-> data)[total_items - i + 3 - 1] = temp4;
+
+    }
+      //tail case for elements beyond factor of 4
+      for(uint32_t i = total_items / 2 /4 * 4; i < total_items / 2; i++) {
+          int32_t temp = (b_matrix->data)[i];
+          
+          (b_matrix->data)[i] = (b_matrix->data)[total_items - i - 1];
+          (b_matrix-> data)[total_items - i - 1] = temp;
+      }
+
     //now we malloc space for the output_matrix
     uint32_t output_rows = (a_matrix->rows) - (b_matrix -> rows) + 1;
     uint32_t output_cols = (a_matrix->cols) - (b_matrix -> cols) + 1;
@@ -38,7 +62,6 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
       int shifter = 1;
       int row_counter = 1;
 
-      __m256i sum_vec = _mm256_setzero_si256();
       #pragma omp parallel for
       for (uint32_t output_counter = 0; output_counter < (output_cols * output_rows); output_counter++) {
           //figuring out counter lol
@@ -52,37 +75,11 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
           counter++;
           shifter++;
          }
-
-  return -1;
-}
- void flip(matrix_t *b_matrix, uint32_t total_items) {
-     //unrolling the flip by 4
-      #pragma omp parallel for
-      for(uint32_t i = 0; i < total_items / 2 /4 * 4; i+=4) {
-        int32_t temp1 = (b_matrix->data)[i];
-        int32_t temp2 = (b_matrix->data)[i + 1];
-        int32_t temp3 = (b_matrix->data)[i + 2];
-        int32_t temp4 = (b_matrix->data)[i + 3];
-
-        (b_matrix->data)[i] = (b_matrix->data)[total_items - i - 1];
-        (b_matrix->data)[i + 1] = (b_matrix->data)[total_items - i + 1 - 1];
-        (b_matrix->data)[i + 2] = (b_matrix->data)[total_items - i + 2 - 1];
-        (b_matrix->data)[i + 3] = (b_matrix->data)[total_items - i + 3 - 1];
-
-        (b_matrix-> data)[total_items - i - 1] = temp1;
-        (b_matrix-> data)[total_items - i + 1 - 1] = temp2;
-        (b_matrix-> data)[total_items - i + 2 - 1] = temp3;
-        (b_matrix-> data)[total_items - i + 3 - 1] = temp4;
-
-    }
-      //tail case for elements beyond factor of 4
-      for(unit32_t i = total_items / 2 /4 * 4; i < total items / 2; i++) {
-          int32_t temp = (b_matrix->data)[i];
-          
-          (b_matrix->data)[i] = (b_matrix->data)[total_items - i - 1];
-          (b_matrix-> data)[total_items - i - 1] = temp;
       }
 
+  return 0;
+}
+     
   int32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matrix, int total_items) {
       //start location must be such that the entire block is in the block
       //pointers to array's data
@@ -91,55 +88,45 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
       int b_cols = b_matrix->cols;
       int b_rows = b_matrix->rows;
       int a_cols = a_matrix->cols;
-      int a_rows = a_matrix->rows;
-   
-      
-      int counter = 0;
-      //counter in this case represents pairs being multiplied
-      int col_counter = 1;
-      int32_t sum = 0;
-      int moving_location = start_location;
-      //moving location represents the location within a
-      int row_counter = 1;
+      int sum = 0;
 
-   __m256i sumVec = _mm256_loadu_si256((__m256i*)sum);
+      int32_t a_copy[total_items];
+      int a_copy_index = 0;
+
       //parsing through a array until we have multiplied all elements
-      if (a_cols > b_cols) {
+     if (a_cols > b_cols) {
           #pragma omp parallel for
-
-
-
-
-          for (int counter = 0; counter < total_items, counter ++) {
-              sum += b_array[counter] * a_array[moving_location];
-   
-             if (col_counter - b_cols == 0) {
-                  //move down one row
-                  moving_location = start_location + (a_cols * row_counter) - 1; //-1 for accounting for double counting lol
-                  col_counter = 0;
-                  row_counter++; 
+          for(int i = 0; i < b_rows; i++) {
+              for(int j = 0; j < b_cols; j++){
+                a_copy[a_copy_index] = a_array[start_location + (i * a_cols) + j];
+                a_copy_index += 1;
               }
-              counter++;
-              moving_location++;
-              col_counter++;
-          
           }
-      } else {          
+      }
+
+          //for b_matrix size = a_matrix size 
+          //operate on b and a elements 8 at a time
+          __m256i sumVec = _mm256_setzero_si256();
+          #pragma omp parallel for  
           for(int vector_offset = 0; vector_offset < total_items / 8 * 8; vector_offset += 8)
           {
+              //vectorize 8 elements from both a and b
               __m256i b_temp = _mm256_loadu_si256((__m256i*)(b_array + vector_offset));
               __m256i a_temp = _mm256_loadu_si256((__m256i*)(a_array + vector_offset));
-
+            
+              //multiply element-wise then add on top of sum vector
               __m256i product = _mm256_mullo_epi32(b_temp, a_temp);
               sumVec = _mm256_add_epi32(sumVec, product);
           }
-          for (int i = total_items / 8 * 8; i < total_items; i ++) {
+          //tail case for summing products of elements beyond factor 8
+          for (int i = total_items / 8 * 8; i < total_items; i++) {
               sum += b_array[i] * a_array[i];
           }
+          //copy sum vector into array
           int temp_arr[8];
           _mm256_storeu_si256((__m256i*)temp_arr, sumVec);
+          //add all products
           sum += temp_arr[0] + temp_arr[1] + temp_arr[2] + temp_arr[3] + temp_arr[4] + temp_arr[5]+ temp_arr[6]+ temp_arr[7];
-     }
      return sum;
  }
 
