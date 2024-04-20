@@ -88,51 +88,42 @@ int32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matri
     int32_t *b_array = b_matrix->data;
     int32_t *a_array = a_matrix->data;
     int b_cols = b_matrix->cols;
+    int b_rows = b_matrix->rows;
     int a_cols = a_matrix->cols;
 
-
-    int counter = 0;
-    //counter in this case represents pairs being multiplied
-    int col_counter = 1;
     int32_t sum = 0;
-    int moving_location = start_location;
-    //moving location represents the location within a
-    int row_counter = 1;
+    int32_t *a_copy = a_matrix->data;
 
-    //parsing through a array until we have multiplied all elements
+    //for rows and columns in b, copy a matrix to size B and with offset
     if (a_cols > b_cols) {
-        while (counter < total_items) {
-            sum += b_array[counter] * a_array[moving_location];
-
-           if (col_counter - b_cols == 0) {
-                //move down one row
-                moving_location = start_location + (a_cols * row_counter) - 1; //-1 for accounting for double counting lol
-                col_counter = 0;
-                row_counter++; 
-            }
-            counter++;
-            moving_location++;
-            col_counter++;
-        
+        int a_copy_index = 0;
+        for(int i = 0; i < b_rows; i++) {
+              for(int j = 0; j < b_cols; j++){
+                a_copy[a_copy_index] = a_array[start_location + (i * a_cols) + j];
+                a_copy_index += 1;
+             } 
         }
-    } else {
+    }
+
+    //for a size = b size, multiply and add in vectors size 8
         __m256i sumVec = _mm256_setzero_si256();
         #pragma omp parallel for
         for(int vector_offset = 0; vector_offset < total_items / 8 * 8; vector_offset += 8)
           {
               __m256i b_temp = _mm256_loadu_si256((__m256i*)(b_array + vector_offset));
-              __m256i a_temp = _mm256_loadu_si256((__m256i*)(a_array + vector_offset));
+              __m256i a_temp = _mm256_loadu_si256((__m256i*)(a_copy + vector_offset));
 
               __m256i product = _mm256_mullo_epi32(b_temp, a_temp);
               sumVec = _mm256_add_epi32(sumVec, product);
           }
+        //tail case for multiplcation and addition beyond factor 8
+        #pragma omp parallel for reduction(+:sum)
         for (int i = total_items / 8 * 8; i < total_items; i ++) {
-              sum += b_array[i] * a_array[i];
+              sum += b_array[i] * a_copy[i];
           }
           int temp_arr[8];
           _mm256_storeu_si256((__m256i*)temp_arr, sumVec);
           sum += temp_arr[0] + temp_arr[1] + temp_arr[2] + temp_arr[3] + temp_arr[4] + temp_arr[5]+ temp_arr[6]+ temp_arr[7];
-    }
     return sum;
 }
 
