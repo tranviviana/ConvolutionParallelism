@@ -93,8 +93,8 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
       int32_t a_copy[total_items];
       int a_copy_index = 0;
 
-      //parsing through a array until we have multiplied all elements
-     if (a_cols > b_cols) {
+      //cut a_array into size B with offset
+      if (a_cols > b_cols) {
           #pragma omp parallel for
           for(int i = 0; i < b_rows; i++) {
               for(int j = 0; j < b_cols; j++){
@@ -102,8 +102,8 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
                 a_copy_index += 1;
               }
           }
-      }
-
+          a_array = a_copy;
+      } 
           //for b_matrix size = a_matrix size 
           //operate on b and a elements 8 at a time
           __m256i sumVec = _mm256_setzero_si256();
