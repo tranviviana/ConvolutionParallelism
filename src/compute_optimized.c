@@ -13,22 +13,25 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   uint32_t total_items = (b_matrix->rows) * (b_matrix->cols);
   /*uint32_t a_total = (a_matrix->rows) * (a_matrix->cols);*/
 
-  //flip b matrix
+//flip b matrix
   int32_t *b_array = b_matrix->data;
   __m256i reverse_order = _mm256_set_epi32(0,1,2,3,4,5,6,7);
 #pragma omp parallel for
   for(int i = 0; i < (total_items/2)/8 * 8; i += 8){
+      //load front and back 8 from b matrix
       __m256i front = _mm256_loadu_si256((__m256i*)&b_array[i]);
       __m256i back = _mm256_loadu_si256((__m256i*)&b_array[total_items - i - 8]);
+      //flip front and back 8 of b matrix
       front =  _mm256_permutevar8x32_epi32(front, reverse_order);
       back =  _mm256_permutevar8x32_epi32(back, reverse_order);
 
-
+    //store back into the b_array by flipping spots
       _mm256_storeu_si256((__m256i*)&b_array[total_items - i - 8], front);
       _mm256_storeu_si256((__m256i*)&b_array[i], back);
 
   }
-
+  //flip tail case for elements after highest factor of 8
+#pragma omp parallel for
   for (int i = (total_items/2)/8 * 8; i < total_items / 2; i++) {
         // Swap the remaining elements using scalar operations
         int temp = b_array[i];
