@@ -31,18 +31,18 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   omatrix->data = output;
     //location in a is the counter
 
+  if (output == NULL || output_matrix == NULL) {
+      return -1;
+  }
 
   //flip b matrix matrix flip should be right
+  #pragma omp parallel for
   for(int i = 0; i < total_items; i++) {
       *(b_reversed + i) = *(b_data + total_items - i - 1);
   }
   b_matrix->data = b_reversed;
   free(b_data);
 
-  
-  if (output == NULL || output_matrix == NULL) {
-      return -1;
-  }
 
     uint32_t counter = 0;
     //counter is location within a
@@ -64,8 +64,6 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
        }
         
     }
-    
-
   return 0;
 }
 
