@@ -14,7 +14,7 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   /*uint32_t a_total = (a_matrix->rows) * (a_matrix->cols);*/
 
 //flip b matrix
-  int32_t *b_array = b_matrix->data;
+  int32_t *b_array = b_matrix->data;i
   __m256i reverse_order = _mm256_set_epi32(0,1,2,3,4,5,6,7);
 #pragma omp parallel for
   for(int i = 0; i < (total_items/2)/8 * 8; i += 8){
@@ -76,6 +76,22 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
         shifter++;
        }
     }
+    /*
+#pragma omp parallel for
+    for ( i = output_counter; output_counter < (output_cols * output_rows); i++) {
+        ouput[output_counter] = blockwise(counter, b_matrix, a_matrix, total_items);
+        if(shifter == output_cols) {
+            counter = row_counter*(a_matrix->cols);
+            shifter ++;
+            row_counter++;
+        } else {
+            counter++;
+            shifter++;
+            
+    }
+    }
+    */
+
     
 
     
