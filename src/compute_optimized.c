@@ -10,6 +10,7 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   // TODO: convolve matrix a and matrix b, and store the resulting matrix in
  // output_matrix
   int32_t *b_data = b_matrix->data;
+  int32_t *a_data = a_matrix->data;
   int b_rows = b_matrix->rows;
   int b_cols = b_matrix->cols;
   int a_rows = a_matrix->rows;
@@ -42,11 +43,20 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   }
   b_matrix->data = b_reversed;
   free(b_data);
+  b_data = b_matrix->data;
 
-for (row = 0; row < output_rows; row++) {
-    for (col = 0; rol < output_cols; col++ {
-            
+  int output_index = 0;
+  for (int row = 0; row < a_rows - b_rows; row++) {
+    for (int col = 0; col < a_cols - b_cols; col++) {
+        int32_t sum = 0;
+        for (int i = 0; i < b_rows; i++) {
+            for(int j = 0; j < b_cols; j++) {
+                sum += *(b_data + (i * b_cols) + j) * (*(a_data + (i * a_cols) + (row * a_cols) + j + col));
             }
+        }
+        output[output_index] = sum;
+        output_index ++;
+    }
 }
    /* uint32_t counter = 0;
     //counter is location within a
