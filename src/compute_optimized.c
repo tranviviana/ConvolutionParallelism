@@ -54,9 +54,6 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   free(b_data);
   b_data = b_matrix->data;
 
-  //int output_index = 0;
-
-  //#pragma omp parallel for 
   for (int row = 0; row < output_rows; row++) {
     #pragma omp parallel for
     for (int col = 0; col < output_cols; col++) {
@@ -64,32 +61,36 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
           __m256i a_vector;
           __m256i b_vector;
           int32_t sum = 0;
+          __m256i a_vector2;
+          __m256i b_vector2;
           sum_groups = _mm256_setzero_si256();
+
           int32_t temp_arr[8];
 
           for (int i = 0; i < b_rows; i++) {
               //sum_groups = _mm256_setzero_si256();
 
-            for(int j = 0; j < b_cols/8 * 8; j+=8) {
+            for(int j = 0; j < b_cols/16 * 16; j+=16) {
                 a_vector = _mm256_loadu_si256((__m256i *)(a_data + (i * a_cols) + (row * a_cols) + (j + col)));
+                a_vector2 = _mm256_loadu_si256((__m256i *)(a_data + (i * a_cols) + (row * a_cols) + (j + 8 + col)));
+
                 b_vector = _mm256_loadu_si256((__m256i*)(b_data + (i * b_cols) + j));
+                b_vector2 = _mm256_loadu_si256((__m256i*)(b_data + (i * b_cols) + j + 8));
+
                 sum_groups = _mm256_add_epi32(sum_groups, _mm256_mullo_epi32(a_vector, b_vector));
+                sum_groups = _mm256_add_epi32(sum_groups, _mm256_mullo_epi32(a_vector2, b_vector2));
+
           }
             //tail case
-            /*_mm256_storeu_si256((__m256i*)temp_arr, sum_groups);
-            sum += temp_arr[0] + temp_arr[1] + temp_arr[2] + temp_arr[3] + temp_arr[4] + temp_arr[5] + temp_arr[6] + temp_arr[7];*/
-            for (int c = b_cols/8 * 8; c < b_cols; c++) {
+            for (int c = b_cols/16 * 16; c < b_cols; c++) {
                 sum += b_data[i * b_cols + c] * a_data[(i * a_cols) + (row * a_cols) + c + col];
             }
 
       }
             _mm256_storeu_si256((__m256i*)temp_arr, sum_groups);
             sum += temp_arr[0] + temp_arr[1] + temp_arr[2] + temp_arr[3] + temp_arr[4] + temp_arr[5] + temp_arr[6] + temp_arr[7];
-            /*output[output_index] = sum;
-            output_index++;*/
              *(output + (row * output_cols) + col) = sum;
-            
-  }
+    }
   }
 
   return 0;
