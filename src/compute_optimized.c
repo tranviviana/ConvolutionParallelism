@@ -36,6 +36,7 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
       return -1;
   }
 
+  int32_t sum = 0;
   //flip b matrix matrix flip should be right
   #pragma omp parallel for
   for(int i = 0; i < total_items; i++) {
@@ -46,9 +47,10 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   b_data = b_matrix->data;
 
   int output_index = 0;
+  //#pragma omp parallel for 
   for (int row = 0; row < output_rows; row++) {
       for (int col = 0; col < output_cols; col++) {
-          int32_t sum = 0;
+          sum = 0;
           for (int i = 0; i < b_rows; i++) {
               __m256i sum_groups = _mm256_setzero_si256();
 
@@ -61,6 +63,7 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
             int32_t temp_arr[8];
             _mm256_storeu_si256((__m256i*)temp_arr, sum_groups);
             sum += temp_arr[0] + temp_arr[1] + temp_arr[2] + temp_arr[3] + temp_arr[4] + temp_arr[5] + temp_arr[6] + temp_arr[7];
+            //#pragma omp parallel for
             for (int c = b_cols/8 * 8; c < b_cols; c++) {
                 sum += b_data[i * b_cols + c] * a_data[(i * a_cols) + (row * a_cols) + c + col];
             }
