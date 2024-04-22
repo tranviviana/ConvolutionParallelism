@@ -3,7 +3,6 @@
 #include <immintrin.h>
 
 #include "compute.h"
-int32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matrix, int b_cols, int a_cols, int total_items);
 
 // Computes the convolution of two matrices
 int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
@@ -36,18 +35,20 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
       return -1;
   }
 
-  int32_t sum = 0;
   //flip b matrix matrix flip should be right
   #pragma omp parallel for
   for(int i = 0; i < total_items; i++) {
       *(b_reversed + i) = *(b_data + total_items - i - 1);
   }
+
+
   b_matrix->data = b_reversed;
   free(b_data);
   b_data = b_matrix->data;
 
   int output_index = 0;
-  //#pragma omp parallel for 
+  int32_t sum = 0;
+  #pragma omp parallel for 
   for (int row = 0; row < output_rows; row++) {
       for (int col = 0; col < output_cols; col++) {
           sum = 0;
