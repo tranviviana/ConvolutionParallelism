@@ -1,9 +1,6 @@
 #include <mpi.h>
-#include <omp.h>
-#include <x86intrin.h>
-#include <immintrin.h>
 #include "coordinator.h"
-#include "compute.h"
+
 
 #define READY 0
 #define NEW_TASK 1
