@@ -56,13 +56,6 @@ int main(int argc, char *argv[]) {
       MPI_Recv(&message, 1, MPI_INT32_T, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       if (message == TERMINATE) break;
       execute_task(tasks[message]);
-    /*if (execute_task(tasks[message])) {
-      printf("Task %d failed\n", message);
-      return -1;
-    }*/
-      //execute_task(tasks[message]);
-      //free(tasks[message]->path);
-      //free(tasks[message]);
       
       }
   }
