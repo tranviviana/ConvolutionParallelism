@@ -43,8 +43,12 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   b_matrix->data = b_reversed;
   free(b_data);
 
-
-    uint32_t counter = 0;
+for (row = 0; row < output_rows; row++) {
+    for (col = 0; rol < output_cols; col++ {
+            
+            }
+}
+   /* uint32_t counter = 0;
     //counter is location within a
     uint32_t output_counter = 0;
     //number of calls within one row is the shifter
@@ -63,11 +67,11 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
         shifter++;
        }
         
-    }
+    }*/
   return 0;
 }
 
-int32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matrix, int b_cols, int a_cols, int total_items) {
+/*int32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matrix, int b_cols, int a_cols, int total_items) {
     //start location must be such that the entire block is in the block
     //pointers to array's data
     int32_t *b_array = b_matrix->data;
@@ -106,7 +110,7 @@ int32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matri
         }
     }
     return sum;
-}
+}*/
 
 // Executes a task
 int execute_task(task_t *task) {
