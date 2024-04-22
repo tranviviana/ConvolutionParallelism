@@ -46,8 +46,8 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   b_data = b_matrix->data;
 
   int output_index = 0;
-  for (int row = 0; row < a_rows - b_rows; row++) {
-    for (int col = 0; col < a_cols - b_cols; col++) {
+  for (int row = 0; row < a_rows - b_rows + 1; row++) {
+    for (int col = 0; col < a_cols - b_cols + 1; col++) {
         int32_t sum = 0;
         for (int i = 0; i < b_rows; i++) {
             for(int j = 0; j < b_cols; j++) {
