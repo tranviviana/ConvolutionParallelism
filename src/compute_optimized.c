@@ -37,7 +37,15 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
 
   //flip b matrix matrix flip should be right
   #pragma omp parallel for
-  for(int i = 0; i < total_items; i++) {
+  for(int i = 0; i < total_items/4 *4; i+=4) {
+      *(b_reversed + i) = *(b_data + total_items - i - 1);
+      *(b_reversed + i + 1) = *(b_data + total_items - i - 2);
+      *(b_reversed + i + 2) = *(b_data + total_items - i - 3);
+      *(b_reversed + i + 3) = *(b_data + total_items - i - 4);
+  }
+  //tail case
+  #pragma omp parallel for
+  for(int i = total_items/4 * 4; i < total_items; i++) {
       *(b_reversed + i) = *(b_data + total_items - i - 1);
   }
 
@@ -46,32 +54,41 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   free(b_data);
   b_data = b_matrix->data;
 
-  int output_index = 0;
-  int32_t sum = 0;
-  #pragma omp parallel for 
+  //int output_index = 0;
+
+  //#pragma omp parallel for 
   for (int row = 0; row < output_rows; row++) {
-      for (int col = 0; col < output_cols; col++) {
-          sum = 0;
+    #pragma omp parallel for
+    for (int col = 0; col < output_cols; col++) {
+          __m256i sum_groups;
+          __m256i a_vector;
+          __m256i b_vector;
+          int32_t sum = 0;
+          sum_groups = _mm256_setzero_si256();
+          int32_t temp_arr[8];
+
           for (int i = 0; i < b_rows; i++) {
-              __m256i sum_groups = _mm256_setzero_si256();
+              //sum_groups = _mm256_setzero_si256();
 
             for(int j = 0; j < b_cols/8 * 8; j+=8) {
-                __m256i a_vector = _mm256_loadu_si256((__m256i *)(a_data + (i * a_cols) + (row * a_cols) + (j + col)));
-                __m256i b_vector = _mm256_loadu_si256((__m256i*)(b_data + (i * b_cols) + j));
+                a_vector = _mm256_loadu_si256((__m256i *)(a_data + (i * a_cols) + (row * a_cols) + (j + col)));
+                b_vector = _mm256_loadu_si256((__m256i*)(b_data + (i * b_cols) + j));
                 sum_groups = _mm256_add_epi32(sum_groups, _mm256_mullo_epi32(a_vector, b_vector));
           }
             //tail case
-            int32_t temp_arr[8];
-            _mm256_storeu_si256((__m256i*)temp_arr, sum_groups);
-            sum += temp_arr[0] + temp_arr[1] + temp_arr[2] + temp_arr[3] + temp_arr[4] + temp_arr[5] + temp_arr[6] + temp_arr[7];
-            //#pragma omp parallel for
+            /*_mm256_storeu_si256((__m256i*)temp_arr, sum_groups);
+            sum += temp_arr[0] + temp_arr[1] + temp_arr[2] + temp_arr[3] + temp_arr[4] + temp_arr[5] + temp_arr[6] + temp_arr[7];*/
             for (int c = b_cols/8 * 8; c < b_cols; c++) {
                 sum += b_data[i * b_cols + c] * a_data[(i * a_cols) + (row * a_cols) + c + col];
             }
 
       }
-          output[output_index] = sum;
-          output_index++;
+            _mm256_storeu_si256((__m256i*)temp_arr, sum_groups);
+            sum += temp_arr[0] + temp_arr[1] + temp_arr[2] + temp_arr[3] + temp_arr[4] + temp_arr[5] + temp_arr[6] + temp_arr[7];
+            /*output[output_index] = sum;
+            output_index++;*/
+             *(output + (row * output_cols) + col) = sum;
+            
   }
   }
 
