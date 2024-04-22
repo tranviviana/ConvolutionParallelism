@@ -82,7 +82,7 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
              *(output + (row * output_cols) + col) = sum;
     }
 }
-  return -1;
+  return 0;
 }
 
 // Executes a task
@@ -94,6 +94,10 @@ int execute_task(task_t *task) {
     printf("Error reading matrix from %s\n", a_matrix_path);
     return -1;
   }
+  /*printf(a_matrix->rows);
+  printf(a_matrix->cols);
+  printf(b_matrix->rows);
+  printf(b_matrix->cols); */
   free(a_matrix_path);
 
   char *b_matrix_path = get_b_matrix_path(task);

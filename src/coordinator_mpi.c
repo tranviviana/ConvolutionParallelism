@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     return -1;
   }
   int numTasks;
-  //= atoi(argv[1]);
+      //= atoi(argv[1]);
   task_t **tasks;
   if (read_tasks(argv[1], &numTasks, &tasks)) {
           printf("error reading task list from %s\n", argv[1]);
@@ -55,10 +55,11 @@ int main(int argc, char *argv[]) {
       //receiving message
       MPI_Recv(&message, 1, MPI_INT32_T, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       if (message == TERMINATE) break;
-    if (execute_task(tasks[message])) {
+      execute_task(tasks[message]);
+    /*if (execute_task(tasks[message])) {
       printf("Task %d failed\n", message);
       return -1;
-    }
+    }*/
       //execute_task(tasks[message]);
       //free(tasks[message]->path);
       //free(tasks[message]);
