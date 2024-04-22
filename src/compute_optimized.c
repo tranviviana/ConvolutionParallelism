@@ -48,11 +48,9 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
   int output_index = 0;
   for (int row = 0; row < output_rows; row++) {
       for (int col = 0; col < output_cols; col++) {
-          //__m256i sum_groups = _mm256_setzero_si256();
           int32_t sum = 0;
           for (int i = 0; i < b_rows; i++) {
               __m256i sum_groups = _mm256_setzero_si256();
-             // int32_t sum = 0;*/
 
             for(int j = 0; j < b_cols/8 * 8; j+=8) {
                 __m256i a_vector = _mm256_loadu_si256((__m256i *)(a_data + (i * a_cols) + (row * a_cols) + (j + col)));
@@ -66,96 +64,16 @@ int convolve(matrix_t *a_matrix, matrix_t *b_matrix, matrix_t **output_matrix) {
             for (int c = b_cols/8 * 8; c < b_cols; c++) {
                 sum += b_data[i * b_cols + c] * a_data[(i * a_cols) + (row * a_cols) + c + col];
             }
-            /*output[output_index]  = sum;
-            output_index++; */
 
       }
           output[output_index] = sum;
           output_index++;
   }
   }
-  /*
 
-  int output_index = 0;
-  for (int row = 0; row < output_rows; row++) {
-    for (int col = 0; col < output_cols; col++) {
-        int32_t sum = 0;
-        for (int i = 0; i < b_rows; i++) {
-            for(int j = 0; j < b_cols; j++) {
-                sum += *(b_data + (i * b_cols) + j) * (*(a_data + (i * a_cols) + (row * a_cols) + j + col));
-                // i * bcols is shifting down the rows while the plus j is the offset within b
-                // i * a_cols is shift down a based on the row of b (if b is on row two for a 2*2 then a is also on row 2) 
-                // row * a_cols is shift down a based on the output row (^ output row is 0 so there is no extra shift) 
-                // j and col are the offsets since output_cols is num of shifts and j is the cold for b (2 col of b and 3 shift means 5 location cuz 1 -> 2 -> 3 -> 4 and then second col == 5)
-            }
-        }
-        output[output_index] = sum;
-        output_index ++;
-    }
-}*/
-   /* uint32_t counter = 0;
-    //counter is location within a
-    uint32_t output_counter = 0;
-    //number of calls within one row is the shifter
-    int shifter = 1;
-    int row_counter = 1;
-    while (output_counter < (output_cols * output_rows)) {
-        //figuring out counter lol
-        output[output_counter] = blockwise(counter, b_matrix, a_matrix, b_cols, a_cols, total_items);  
-        output_counter++;
-        if(shifter == output_cols) {
-            counter = row_counter * (a_cols);
-            shifter = 1;
-            row_counter++;
-       } else {
-        counter++;
-        shifter++;
-       }
-        
-    }*/
   return 0;
 }
 
-/*int32_t blockwise(uint32_t start_location, matrix_t *b_matrix, matrix_t *a_matrix, int b_cols, int a_cols, int total_items) {
-    //start location must be such that the entire block is in the block
-    //pointers to array's data
-    int32_t *b_array = b_matrix->data;
-    int32_t *a_array = a_matrix->data;
-
-
-    int counter = 0;
-    //counter in this case represents pairs being multiplied
-    int col_counter = 1;
-    int32_t sum = 0;
-    int moving_location = start_location;
-    //moving location represents the location within a
-    int row_counter = 1;
-
-    //parsing through a array until we have multiplied all elements
-    if (a_cols > b_cols) {
-        while (counter < total_items) {
-            sum += b_array[counter] * a_array[moving_location];
-
-           if (col_counter - b_cols == 0) {
-                //move down one row
-                moving_location = start_location + (a_cols * row_counter) - 1; //-1 for accounting for double counting lol
-                col_counter = 0;
-                row_counter++; 
-            }
-            counter++;
-            moving_location++;
-            col_counter++;
-        
-        }
-    } else {
-        while (counter < total_items) {
-            sum += b_array[counter] * a_array[start_location];
-            counter++;
-            start_location++;
-        }
-    }
-    return sum;
-}*/
 
 // Executes a task
 int execute_task(task_t *task) {
